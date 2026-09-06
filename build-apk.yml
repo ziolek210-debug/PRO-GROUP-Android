@@ -1,0 +1,49 @@
+name: Build PRO-GROUP APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unpack PRO-GROUP project
+        run: |
+          mkdir -p src
+          unzip -q PRO-GROUP-Android-source.zip -d src
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Build APK
+        run: cd src && gradle :app:assembleDebug --stacktrace
+
+      - name: Rename APK
+        run: cp src/app/build/outputs/apk/debug/app-debug.apk PRO-GROUP-3.1.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRO-GROUP-Android-3.1
+          path: PRO-GROUP-3.1.apk
+          if-no-files-found: error
